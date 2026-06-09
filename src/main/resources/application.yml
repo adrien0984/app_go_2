@@ -12,6 +12,11 @@ app:
       secret: change-me-in-production-change-me-in-production
       access-token-ttl: 15m
       refresh-token-ttl: 7d
+  katago:
+    timeout: 5000
+    retry-count: 2
+    retry-delay-ms: 500
+    enabled: true
 
 # Server configuration
 server:
