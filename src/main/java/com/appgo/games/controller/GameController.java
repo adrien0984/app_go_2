@@ -3,6 +3,7 @@ package com.appgo.games.controller;
 import com.appgo.games.dto.CreateGameRequest;
 import com.appgo.games.dto.CreateGameResponse;
 import com.appgo.games.dto.GameStateResponse;
+import com.appgo.games.dto.MakeMoveRequest;
 import com.appgo.games.service.GameService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -34,5 +35,13 @@ public class GameController {
     @GetMapping("/{id}")
     public GameStateResponse getGame(@PathVariable("id") String gameId) {
         return gameService.getGameById(gameId);
+    }
+
+    @PostMapping("/{id}/moves")
+    public ResponseEntity<GameStateResponse> makeMove(
+            @PathVariable("id") String gameId,
+            @Valid @RequestBody MakeMoveRequest request) {
+        GameStateResponse response = gameService.playMove(gameId, request.row(), request.col());
+        return ResponseEntity.ok(response);
     }
 }

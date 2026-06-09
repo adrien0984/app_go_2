@@ -84,6 +84,148 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
+    @Test
+    void makeMoveOnLegalPositionReturns200AndUpdatesBoard() throws Exception {
+        String accessToken = loginAndReadAccessToken();
+
+        var createResult = mockMvc.perform(post("/games")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardSize": 9
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode createBody = objectMapper.readTree(createResult.getResponse().getContentAsString());
+        String gameId = createBody.get("gameId").asText();
+
+        // Make a legal move at (3, 3)
+        var moveResult = mockMvc.perform(post("/games/{id}/moves", gameId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "row": 3,
+                                  "col": 3
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameId").value(gameId))
+                .andExpect(jsonPath("$.moveCount").value(1))
+                .andExpect(jsonPath("$.nextPlayer").value("WHITE"))
+                .andExpect(jsonPath("$.board[3][3]").value("BLACK"))
+                .andReturn();
+
+        // Verify the board was updated
+        JsonNode moveBody = objectMapper.readTree(moveResult.getResponse().getContentAsString());
+        String boardValue = moveBody.get("board").get(3).get(3).asText();
+        assert boardValue.equals("BLACK");
+    }
+
+    @Test
+    void makeMoveOnOccupiedPositionReturns422() throws Exception {
+        String accessToken = loginAndReadAccessToken();
+
+        var createResult = mockMvc.perform(post("/games")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardSize": 9
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode createBody = objectMapper.readTree(createResult.getResponse().getContentAsString());
+        String gameId = createBody.get("gameId").asText();
+
+        // Make first move
+        mockMvc.perform(post("/games/{id}/moves", gameId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "row": 3,
+                                  "col": 3
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        // Try to make move at same position
+        mockMvc.perform(post("/games/{id}/moves", gameId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "row": 3,
+                                  "col": 3
+                                }
+                                """))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value("UNPROCESSABLE_ENTITY"));
+    }
+
+    @Test
+    void makeMoveOutOfBoundsReturns422() throws Exception {
+        String accessToken = loginAndReadAccessToken();
+
+        var createResult = mockMvc.perform(post("/games")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "boardSize": 9
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode createBody = objectMapper.readTree(createResult.getResponse().getContentAsString());
+        String gameId = createBody.get("gameId").asText();
+
+        // Try to move out of bounds
+        mockMvc.perform(post("/games/{id}/moves", gameId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "row": 10,
+                                  "col": 10
+                                }
+                                """))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value("UNPROCESSABLE_ENTITY"));
+    }
+
+    @Test
+    void makeMoveOnNonExistentGameReturns404() throws Exception {
+        String accessToken = loginAndReadAccessToken();
+
+        mockMvc.perform(post("/games/{id}/moves", "non-existent")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "row": 3,
+                                  "col": 3
+                                }
+                                """))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    void makeMoveWithoutAuthorizationReturns401() throws Exception {
+        mockMvc.perform(post("/games")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnauthorized());
+    }
+
     private String loginAndReadAccessToken() throws Exception {
         var result = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
