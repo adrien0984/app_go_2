@@ -5,6 +5,7 @@ import com.appgo.games.dto.GameStateResponse;
 import com.appgo.games.exception.GameNotFoundException;
 import com.appgo.games.exception.IllegalMoveException;
 import com.appgo.games.model.GameState;
+import com.appgo.shared.observability.BusinessMetrics;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +18,17 @@ public class GameService {
     private static final int DEFAULT_BOARD_SIZE = 19;
 
     private final Map<String, GameState> gamesById = new ConcurrentHashMap<>();
+    private final BusinessMetrics businessMetrics;
+
+    public GameService(BusinessMetrics businessMetrics) {
+        this.businessMetrics = businessMetrics;
+    }
 
     public CreateGameResponse createGame(Integer requestedBoardSize) {
         int boardSize = requestedBoardSize == null ? DEFAULT_BOARD_SIZE : requestedBoardSize;
         GameState game = GameState.createNew(boardSize);
         gamesById.put(game.getGameId(), game);
+        businessMetrics.recordGameCreated();
         return new CreateGameResponse(game.getGameId());
     }
 
@@ -43,9 +50,13 @@ public class GameService {
             throw new IllegalMoveException("Illegal move at position [" + row + ", " + col + "]");
         }
 
+        var sample = businessMetrics.recordMoveExecutionStart();
         try {
             game.applyMove(row, col);
+            businessMetrics.recordGameMove();
+            businessMetrics.recordMoveExecutionStop(sample);
         } catch (IllegalArgumentException e) {
+            businessMetrics.recordMoveExecutionStop(sample);
             throw new IllegalMoveException(e.getMessage(), e);
         }
 
@@ -60,6 +71,7 @@ public class GameService {
 
         try {
             game.passMove();
+            businessMetrics.recordGamePass();
         } catch (IllegalStateException e) {
             throw new IllegalMoveException(e.getMessage(), e);
         }

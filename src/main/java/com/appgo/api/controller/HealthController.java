@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Contrôleur pour les endpoints de santé et d'informations.
+ * 
+ * Endpoint key:
+ * - GET /health - Check application health status (returns X-Correlation-Id header)
  */
 @RestController
 @RequestMapping("/health")
@@ -20,6 +23,14 @@ public class HealthController {
 
     private static final Logger log = LoggerFactory.getLogger(HealthController.class);
 
+    /**
+     * Vérifie l'état de santé de l'application.
+     * 
+     * Cette opération ne consomme pas de ressources et est utilisée pour le monitoring.
+     * Le correlation-id de la requête est retourné en header pour le suivi.
+     * 
+     * @return un objet JSON contenant le statut (UP) et un message
+     */
     @GetMapping
     public ResponseEntity<Map<String, Object>> health() {
         log.debug("Health check endpoint called");

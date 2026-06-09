@@ -35,7 +35,16 @@ logs/
 *.war
 *.ear
 
+# Node/npm (for mobile development)
+node_modules/
+package-lock.json
+npm-debug.log
+.npm
+
 # Environment
 .env
 .env.local
 .env.*.local
+
+# OS
+Thumbs.db
