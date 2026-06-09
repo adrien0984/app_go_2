@@ -3,6 +3,7 @@ package com.appgo.auth.config;
 import com.appgo.auth.filter.JwtAuthenticationFilter;
 import com.appgo.auth.security.RestAccessDeniedHandler;
 import com.appgo.auth.security.RestAuthenticationEntryPoint;
+import com.appgo.auth.service.UtilisateurDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,11 +13,9 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -30,15 +29,6 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService(AuthProperties authProperties, PasswordEncoder passwordEncoder) {
-        var demoUser = User.withUsername(authProperties.getDemo().getUsername())
-                .password(passwordEncoder.encode(authProperties.getDemo().getPassword()))
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(demoUser);
     }
 
     @Bean
