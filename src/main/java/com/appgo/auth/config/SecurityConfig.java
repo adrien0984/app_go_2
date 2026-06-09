@@ -60,7 +60,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health", "/auth/login", "/auth/refresh", "/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/actuator/info").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/info", "/actuator/metrics").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

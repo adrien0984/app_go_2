@@ -24,6 +24,8 @@ server:
 
 # Logging
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{correlationId}] %5p [%thread] %c{1}:%L - %m%n"
   level:
     root: INFO
     com.appgo: DEBUG
@@ -33,7 +35,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics
   endpoint:
     health:
       show-details: when-authorized
+  metrics:
+    enable:
+      jvm: true
+      process: true
+      logback: true
