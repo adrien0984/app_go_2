@@ -166,6 +166,46 @@ curl http://localhost:8080/api/protected \
 }
 ```
 
+### Games
+
+#### Créer une partie
+
+```bash
+curl -X POST http://localhost:8080/games \
+  -H "Authorization: Bearer <access-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"boardSize":19}'
+```
+
+Réponse (HTTP 201):
+```json
+{
+  "gameId": "<uuid>"
+}
+```
+
+#### Lire l'état d'une partie
+
+```bash
+curl http://localhost:8080/games/<game-id> \
+  -H "Authorization: Bearer <access-token>"
+```
+
+Réponse (HTTP 200):
+```json
+{
+  "gameId": "<uuid>",
+  "boardSize": 19,
+  "status": "IN_PROGRESS",
+  "nextPlayer": "BLACK",
+  "moveCount": 0,
+  "createdAt": "2026-06-09T20:00:00Z",
+  "board": [
+    ["EMPTY", "..."]
+  ]
+}
+```
+
 ## Gestion des Erreurs
 
 L'API utilise un format d'erreur standardisé :
