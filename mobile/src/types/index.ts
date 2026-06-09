@@ -11,6 +11,10 @@ export interface TokenResponse {
   refreshTokenExpiresInSeconds: number;
 }
 
+export interface CreateGameResponse {
+  gameId: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   token: string | null;

@@ -4,17 +4,11 @@ export default function AppLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: true,
-        animationEnabled: true,
+        headerShown: false,
+        animation: 'none',
       }}
     >
-      <Stack.Screen
-        name="home"
-        options={{
-          title: 'App Go',
-          headerBackVisible: false,
-        }}
-      />
+      <Stack.Screen name="home" />
     </Stack>
   );
 }

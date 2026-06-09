@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Config } from '../utils/config';
-import { LoginRequest, TokenResponse } from '../types';
+import { CreateGameResponse, LoginRequest, TokenResponse } from '../types';
 
 const api: AxiosInstance = axios.create({
   baseURL: Config.API_URL,
@@ -39,13 +39,24 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'user']);
+    await Promise.all([
+      AsyncStorage.removeItem('access_token'),
+      AsyncStorage.removeItem('refresh_token'),
+      AsyncStorage.removeItem('user'),
+    ]);
   },
 };
 
 export const health = {
   async check() {
     const response = await api.get('/health');
+    return response.data;
+  },
+};
+
+export const gamesService = {
+  async createGame(boardSize: number = 19): Promise<CreateGameResponse> {
+    const response = await api.post<CreateGameResponse>('/games', { boardSize });
     return response.data;
   },
 };

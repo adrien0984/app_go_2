@@ -22,13 +22,14 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inAppGroup = segments[0] === '(app)';
 
     if (token == null) {
       if (!inAuthGroup) {
         router.replace('/login');
       }
     } else {
-      if (inAuthGroup) {
+      if (inAuthGroup || !inAppGroup) {
         router.replace('/home');
       }
     }

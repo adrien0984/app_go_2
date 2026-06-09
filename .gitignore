@@ -29,6 +29,11 @@ bin/
 *.log
 logs/
 
+# Local data files
+data/*.mv.db
+data/*.trace.db
+data/*.lock.db
+
 # Java
 *.class
 *.jar

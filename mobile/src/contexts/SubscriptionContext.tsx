@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, ReactNod
 import { SubscriptionContextType, WebSocketEvent, SubscriptionOptions } from '../types';
 import { useAuth } from './AuthContext';
 import websocketService from '../services/websocket';
+import { gamesService } from '../services/api';
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
@@ -41,6 +42,9 @@ export const SubscriptionProvider: React.FC<SubscriptionProviderProps> = ({ chil
       try {
         websocketService.setToken(token);
         websocketService.setUserId(user.id);
+
+        const createdGame = await gamesService.createGame();
+        websocketService.setGameId(createdGame.gameId);
 
         // Setup reconnect handler
         websocketService.onReconnect((connected) => {

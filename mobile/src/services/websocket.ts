@@ -19,6 +19,7 @@ class WebSocketService {
   private url: string;
   private token: string | null = null;
   private userId: string | null = null;
+  private gameId: string | null = null;
   private subscriptions: Map<string, Subscription> = new Map();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
@@ -29,7 +30,7 @@ class WebSocketService {
   private reconnectCallbacks: Set<(connected: boolean) => void> = new Set();
 
   constructor() {
-    this.url = `${Config.WS_URL}/ws`;
+    this.url = `${Config.WS_URL}/ws/games`;
   }
 
   public setToken(token: string): void {
@@ -38,6 +39,10 @@ class WebSocketService {
 
   public setUserId(userId: string): void {
     this.userId = userId;
+  }
+
+  public setGameId(gameId: string): void {
+    this.gameId = gameId;
   }
 
   public onReconnect(callback: (connected: boolean) => void): void {
@@ -54,9 +59,12 @@ class WebSocketService {
       this.isIntentionallyClosed = false;
 
       try {
-        const wsUrl = this.token
-          ? `${this.url}?token=${encodeURIComponent(this.token)}`
-          : this.url;
+        if (!this.gameId) {
+          reject(new Error('Missing gameId for WebSocket connection'));
+          return;
+        }
+
+        const wsUrl = `${this.url}/${encodeURIComponent(this.gameId)}`;
 
         this.ws = new WebSocket(wsUrl);
 
@@ -125,11 +133,6 @@ class WebSocketService {
 
     this.subscriptions.set(subscriptionId, subscription);
 
-    // Send subscription message if connected
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.sendSubscription(eventType, userId);
-    }
-
     return subscriptionId;
   }
 
@@ -138,14 +141,6 @@ class WebSocketService {
     if (subscription) {
       this.subscriptions.delete(subscriptionId);
 
-      // Check if this event type has other subscribers
-      const hasOtherSubscribers = Array.from(this.subscriptions.values()).some(
-        (sub) => sub.eventType === subscription.eventType
-      );
-
-      if (!hasOtherSubscribers && this.ws?.readyState === WebSocket.OPEN) {
-        this.sendUnsubscription(subscription.eventType, subscription.userId);
-      }
     }
   }
 
@@ -167,6 +162,16 @@ class WebSocketService {
 
   private handleMessage(message: any): void {
     const { type, data } = message;
+
+    if (type === 'ping') {
+      this.send({ type: 'pong', timestamp: Date.now() });
+      return;
+    }
+
+    if (type === 'error') {
+      console.error('[WebSocket] Server error message:', data ?? message);
+      return;
+    }
 
     // Broadcast to relevant subscribers
     this.subscriptions.forEach((subscription) => {
@@ -196,24 +201,6 @@ class WebSocketService {
         this.scheduleReconnect();
       });
     }, delay);
-  }
-
-  private sendSubscription(eventType: string, userId?: string): void {
-    const message = {
-      type: 'subscribe',
-      eventType,
-      ...(userId && { userId }),
-    };
-    this.send(message);
-  }
-
-  private sendUnsubscription(eventType: string, userId?: string): void {
-    const message = {
-      type: 'unsubscribe',
-      eventType,
-      ...(userId && { userId }),
-    };
-    this.send(message);
   }
 
   private flushMessageQueue(): void {

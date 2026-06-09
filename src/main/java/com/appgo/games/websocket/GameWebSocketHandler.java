@@ -130,7 +130,20 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private String extractGameId(WebSocketSession session) {
         try {
-            return (String) session.getAttributes().get("id");
+            Object fromAttributes = session.getAttributes().get("id");
+            if (fromAttributes instanceof String gameId && !gameId.isBlank()) {
+                return gameId;
+            }
+
+            if (session.getUri() != null) {
+                String path = session.getUri().getPath();
+                String prefix = "/ws/games/";
+                if (path != null && path.startsWith(prefix) && path.length() > prefix.length()) {
+                    return path.substring(prefix.length());
+                }
+            }
+
+            return null;
         } catch (Exception e) {
             logger.warn("Failed to extract game ID from session {}", session.getId());
             return null;
