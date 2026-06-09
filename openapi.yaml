@@ -1,0 +1,465 @@
+openapi: 3.0.3
+info:
+  title: App Go Backend API
+  description: API REST pour l'application App Go - Jeu de Go
+  version: 1.0.0
+  contact:
+    name: App Go Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.appgo.com
+    description: Production server
+
+tags:
+  - name: Health
+    description: Endpoint de santé de l'application
+  - name: Auth
+    description: Endpoints d'authentification
+  - name: Games
+    description: Endpoints de gestion des parties de Go
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Vérifier la santé de l'application
+      description: Retourne le statut de l'application et confirme qu'elle est opérationnelle
+      operationId: health
+      responses:
+        '200':
+          description: Application en bon état de fonctionnement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [UP]
+                    example: UP
+                  message:
+                    type: string
+                    example: Application is running
+              example:
+                status: UP
+                message: Application is running
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authentification utilisateur
+      description: Authentifie un utilisateur avec ses identifiants (username/password) et retourne les tokens JWT
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              username: john_doe
+              password: secure_password_123
+      responses:
+        '200':
+          description: Authentification réussie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                tokenType: Bearer
+                accessTokenExpiresInSeconds: 3600
+                refreshTokenExpiresInSeconds: 604800
+        '400':
+          description: Requête invalide (validation échouée)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: BAD_REQUEST
+                message: Validation failed
+                timestamp: '2024-06-09T21:23:13.211+02:00'
+                details:
+                  - field: username
+                    code: BAD_REQUEST
+                    message: must not be blank
+                  - field: password
+                    code: BAD_REQUEST
+                    message: must not be blank
+                request_id: a1b2c3d4-e5f6-4789-a012-b3c4d5e6f7g8
+        '401':
+          description: Authentification échouée (identifiants invalides)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: UNAUTHORIZED
+                message: Authentication failed
+                timestamp: '2024-06-09T21:23:13.211+02:00'
+                request_id: a1b2c3d4-e5f6-4789-a012-b3c4d5e6f7g8
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Renouveler le token d'accès
+      description: Utilise un refresh token pour obtenir un nouveau pair de tokens (access + refresh)
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Tokens renouvelés avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                tokenType: Bearer
+                accessTokenExpiresInSeconds: 3600
+                refreshTokenExpiresInSeconds: 604800
+        '400':
+          description: Requête invalide (token invalide ou absent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: BAD_REQUEST
+                message: Validation failed
+                timestamp: '2024-06-09T21:23:13.211+02:00'
+                details:
+                  - field: refreshToken
+                    code: BAD_REQUEST
+                    message: must not be blank
+                request_id: a1b2c3d4-e5f6-4789-a012-b3c4d5e6f7g8
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games:
+    post:
+      tags:
+        - Games
+      summary: Créer une nouvelle partie de Go
+      description: Crée une nouvelle partie de Go avec une taille de plateau optionnelle (par défaut 19x19)
+      operationId: createGame
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameRequest'
+            examples:
+              default:
+                summary: Créer avec taille par défaut
+                value: {}
+              custom_size:
+                summary: Créer avec taille personnalisée (9x9)
+                value:
+                  boardSize: 9
+      responses:
+        '201':
+          description: Partie créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGameResponse'
+              example:
+                gameId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        '400':
+          description: Paramètres invalides (taille de plateau hors limites)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: BAD_REQUEST
+                message: Validation failed
+                timestamp: '2024-06-09T21:23:13.211+02:00'
+                details:
+                  - field: boardSize
+                    code: BAD_REQUEST
+                    message: Board size must be greater than or equal to 5
+                request_id: a1b2c3d4-e5f6-4789-a012-b3c4d5e6f7g8
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{id}:
+    get:
+      tags:
+        - Games
+      summary: Récupérer l'état d'une partie
+      description: Récupère l'état actuel d'une partie de Go par son identifiant
+      operationId: getGame
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifiant unique de la partie
+          schema:
+            type: string
+            format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        '200':
+          description: État de la partie récupéré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameStateResponse'
+              example:
+                gameId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+                boardSize: 19
+                status: ONGOING
+                nextPlayer: BLACK
+                moveCount: 42
+                createdAt: '2024-06-09T21:00:00.000Z'
+                board:
+                  - ['EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['BLACK', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+                  - ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
+        '404':
+          description: Partie non trouvée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: NOT_FOUND
+                message: Game not found
+                timestamp: '2024-06-09T21:23:13.211+02:00'
+                request_id: a1b2c3d4-e5f6-4789-a012-b3c4d5e6f7g8
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Nom d'utilisateur
+          example: john_doe
+        password:
+          type: string
+          description: Mot de passe en clair
+          example: secure_password_123
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Token de renouvellement JWT
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    TokenResponse:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - accessTokenExpiresInSeconds
+        - refreshTokenExpiresInSeconds
+      properties:
+        accessToken:
+          type: string
+          description: Token d'accès JWT pour autoriser les requêtes
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: Token de renouvellement JWT pour obtenir un nouvel accessToken
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        tokenType:
+          type: string
+          enum: [Bearer]
+          description: Type de token (toujours Bearer)
+          example: Bearer
+        accessTokenExpiresInSeconds:
+          type: integer
+          format: int64
+          description: Durée de vie du token d'accès en secondes
+          example: 3600
+        refreshTokenExpiresInSeconds:
+          type: integer
+          format: int64
+          description: Durée de vie du token de renouvellement en secondes
+          example: 604800
+
+    CreateGameRequest:
+      type: object
+      properties:
+        boardSize:
+          type: integer
+          minimum: 5
+          maximum: 25
+          description: Taille du plateau de Go (5-25). Valeur par défaut si non spécifié.
+          example: 19
+
+    CreateGameResponse:
+      type: object
+      required:
+        - gameId
+      properties:
+        gameId:
+          type: string
+          format: uuid
+          description: Identifiant unique de la partie créée
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+
+    GameStateResponse:
+      type: object
+      required:
+        - gameId
+        - boardSize
+        - status
+        - nextPlayer
+        - moveCount
+        - createdAt
+        - board
+      properties:
+        gameId:
+          type: string
+          format: uuid
+          description: Identifiant unique de la partie
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        boardSize:
+          type: integer
+          description: Taille du plateau (ex. 19 pour 19x19)
+          example: 19
+        status:
+          type: string
+          enum: [ONGOING, FINISHED]
+          description: État de la partie
+          example: ONGOING
+        nextPlayer:
+          type: string
+          enum: [BLACK, WHITE]
+          description: Couleur du prochain joueur à jouer
+          example: BLACK
+        moveCount:
+          type: integer
+          description: Nombre de coups jouées depuis le début
+          example: 42
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp UTC de création de la partie
+          example: '2024-06-09T21:00:00.000Z'
+        board:
+          type: array
+          description: État du plateau (19x19 ou autre taille), chaque cellule est EMPTY, BLACK, ou WHITE
+          items:
+            type: array
+            items:
+              type: string
+              enum: [EMPTY, BLACK, WHITE]
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - timestamp
+        - request_id
+      properties:
+        code:
+          type: string
+          enum: [BAD_REQUEST, UNAUTHORIZED, NOT_FOUND, FORBIDDEN, CONFLICT, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR]
+          description: Code d'erreur standard
+          example: BAD_REQUEST
+        message:
+          type: string
+          description: Message d'erreur lisible
+          example: Validation failed
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp UTC de l'erreur
+          example: '2024-06-09T21:23:13.211+02:00'
+        details:
+          type: array
+          nullable: true
+          description: Détails d'erreur spécifiques (pour validations)
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        request_id:
+          type: string
+          format: uuid
+          description: Identifiant unique de la requête pour tracking
+          example: a1b2c3d4-e5f6-4789-a012-b3c4d5e6f7g8
+
+    ErrorDetail:
+      type: object
+      required:
+        - field
+        - code
+        - message
+      properties:
+        field:
+          type: string
+          description: Champ concerné
+          example: username
+        code:
+          type: string
+          description: Code d'erreur du champ
+          example: BAD_REQUEST
+        message:
+          type: string
+          description: Message d'erreur du champ
+          example: must not be blank
+
+  responses:
+    InternalServerError:
+      description: Erreur serveur interne
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: INTERNAL_SERVER_ERROR
+            message: An unexpected error occurred
+            timestamp: '2024-06-09T21:23:13.211+02:00'
+            request_id: a1b2c3d4-e5f6-4789-a012-b3c4d5e6f7g8
