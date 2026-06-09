@@ -18,7 +18,7 @@ public class GameState {
     private final int boardSize;
     private final Instant createdAt;
     private final List<List<String>> board;
-    private final String status;
+    private String status;
     private final PartieGo partie;
     private String nextPlayer;
     private int moveCount;
@@ -65,7 +65,24 @@ public class GameState {
         partie.jouer(row, col);
         updateBoardFromPartie();
         moveCount++;
+        updateGameStatus();
+        updateNextPlayer();
+    }
+
+    public void passMove() {
+        partie.passer();
+        updateGameStatus();
+        updateNextPlayer();
+    }
+
+    private void updateNextPlayer() {
         nextPlayer = partie.getJoueurCourant() == CouleurPierre.NOIR ? "BLACK" : "WHITE";
+    }
+
+    private void updateGameStatus() {
+        if (partie.estTerminee()) {
+            this.status = "FINISHED";
+        }
     }
 
     private void updateBoardFromPartie() {
