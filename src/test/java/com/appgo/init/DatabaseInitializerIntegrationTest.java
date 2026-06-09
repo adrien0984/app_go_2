@@ -8,10 +8,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@ActiveProfiles("test")
 class DatabaseInitializerIntegrationTest {
 
     @Autowired
@@ -29,12 +33,13 @@ class DatabaseInitializerIntegrationTest {
     @Test
     void testDatabaseInitializerCreatesUsers() {
         // Verify demo users exist
+        assertTrue(utilisateurRepository.existsByUsername("demo"));
         assertTrue(utilisateurRepository.existsByUsername("demo1"));
         assertTrue(utilisateurRepository.existsByUsername("demo2"));
         assertTrue(utilisateurRepository.existsByUsername("demo3"));
 
         // Verify user count
-        assertEquals(3, utilisateurRepository.count());
+        assertEquals(4, utilisateurRepository.count());
     }
 
     @Test
@@ -56,7 +61,7 @@ class DatabaseInitializerIntegrationTest {
         // First reset
         resetService.resetDatabase();
         long countAfterFirstReset = utilisateurRepository.count();
-        assertEquals(3, countAfterFirstReset);
+        assertEquals(4, countAfterFirstReset);
 
         // Second reset
         resetService.resetDatabase();
@@ -73,13 +78,14 @@ class DatabaseInitializerIntegrationTest {
         utilisateurRepository.save(extraUser);
 
         long countBefore = utilisateurRepository.count();
-        assertTrue(countBefore > 3);
+        assertTrue(countBefore > 4);
 
         // Reset
         resetService.resetDatabase();
 
         // Should only have demo users
-        assertEquals(3, utilisateurRepository.count());
+        assertEquals(4, utilisateurRepository.count());
+        assertTrue(utilisateurRepository.existsByUsername("demo"));
         assertTrue(utilisateurRepository.existsByUsername("demo1"));
         assertTrue(utilisateurRepository.existsByUsername("demo2"));
         assertTrue(utilisateurRepository.existsByUsername("demo3"));

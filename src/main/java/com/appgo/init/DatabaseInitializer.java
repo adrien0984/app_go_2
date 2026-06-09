@@ -42,6 +42,17 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
 
     private void initializeDemoUsers() {
+        // Demo user (for testing with AuthProperties)
+        if (!utilisateurRepository.existsByUsername("demo")) {
+            Utilisateur demoUser = new Utilisateur(
+                    "demo",
+                    passwordEncoder.encode("demo-password"),
+                    "demo@appgo.local"
+            );
+            utilisateurRepository.save(demoUser);
+            logger.info("Created demo user: demo");
+        }
+
         // Demo user 1
         if (!utilisateurRepository.existsByUsername("demo1")) {
             Utilisateur user1 = new Utilisateur(

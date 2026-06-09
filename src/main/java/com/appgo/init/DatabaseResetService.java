@@ -34,7 +34,7 @@ public class DatabaseResetService {
     public void resetDatabase() {
         logger.info("Resetting database...");
 
-        // Supprimer toutes les parties
+            // Supprimer toutes les parties d'abord (foreign keys)
         partieRepository.deleteAll();
         logger.info("Deleted all parties");
 
@@ -42,14 +42,26 @@ public class DatabaseResetService {
         utilisateurRepository.deleteAll();
         logger.info("Deleted all users");
 
-        // Reseed les données de démo
-        seedDemoUsers();
-        seedDemoGames();
+            // Flush pour s'assurer que les deletes sont effectués
+            utilisateurRepository.flush();
+            partieRepository.flush();
 
-        logger.info("Database reset completed successfully");
-    }
+            // Reseed les données de démo
+            seedDemoUsers();
+            seedDemoGames();
+
+            logger.info("Database reset completed successfully");
+        }
 
     private void seedDemoUsers() {
+        Utilisateur demoUser = new Utilisateur(
+                "demo",
+                passwordEncoder.encode("demo-password"),
+                "demo@appgo.local"
+        );
+        utilisateurRepository.save(demoUser);
+        logger.info("Seeded demo user: demo");
+
         Utilisateur user1 = new Utilisateur(
                 "demo1",
                 passwordEncoder.encode("password1"),
