@@ -1,0 +1,10 @@
+spring:
+  profiles: prod
+  
+logging:
+  level:
+    root: WARN
+    com.appgo: WARN
+
+server:
+  port: 8080
