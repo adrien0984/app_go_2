@@ -1,4 +1,7 @@
 # Miscellaneous
+node_modules/
+.expo/
+.expo-shared/
 *.class
 *.log
 *.pyc
