@@ -21,11 +21,16 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v4
+      with:
+        maven-version: 3.9.6
+
     - name: Run Checkstyle linting
-      run: ./mvnw checkstyle:check
+      run: mvn checkstyle:check
 
     - name: Run unit tests
-      run: ./mvnw clean test
+      run: mvn clean test
 
     - name: Upload test results
       if: always()
