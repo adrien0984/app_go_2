@@ -1,5 +1,6 @@
 package com.appgo.shared.error;
 
+import com.appgo.games.exception.GameNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -60,6 +61,21 @@ public class GlobalExceptionHandler {
                 requestId);
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(GameNotFoundException.class)
+    protected ResponseEntity<ErrorResponse> handleGameNotFoundException(GameNotFoundException ex) {
+        String requestId = UUID.randomUUID().toString();
+        log.warn("Resource not found: {}", requestId, ex);
+
+        ErrorResponse response = new ErrorResponse(
+                ErrorCode.NOT_FOUND,
+                ex.getMessage(),
+                LocalDateTime.now(),
+                null,
+                requestId);
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(Exception.class)
