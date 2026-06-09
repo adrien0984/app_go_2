@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.core.AuthenticationException;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -44,6 +45,21 @@ public class GlobalExceptionHandler {
                 requestId);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    protected ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+        String requestId = UUID.randomUUID().toString();
+        log.warn("Authentication error: {}", requestId, ex);
+
+        ErrorResponse response = new ErrorResponse(
+                ErrorCode.UNAUTHORIZED,
+                ex.getMessage() == null ? "Authentication failed" : ex.getMessage(),
+                LocalDateTime.now(),
+                null,
+                requestId);
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(Exception.class)

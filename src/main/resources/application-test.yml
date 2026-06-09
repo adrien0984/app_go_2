@@ -1,6 +1,14 @@
-spring:
-  profiles: test
-  
+app:
+  auth:
+    demo:
+      username: demo
+      password: demo-password
+    jwt:
+      issuer: app-go-backend-test
+      secret: test-secret-test-secret-test-secret
+      access-token-ttl: 15m
+      refresh-token-ttl: 7d
+    
 logging:
   level:
     root: WARN
