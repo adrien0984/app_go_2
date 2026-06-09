@@ -26,3 +26,34 @@ export interface User {
   id: string;
   username: string;
 }
+
+// WebSocket Event Types
+export interface MovePlayedEvent {
+  type: 'move.played';
+  data: {
+    id: string;
+    timestamp: string;
+    // Add additional fields as needed from server
+  };
+}
+
+export type WebSocketEvent = MovePlayedEvent;
+
+export interface WebSocketMessage<T = any> {
+  type: string;
+  data: T;
+  timestamp?: string;
+}
+
+export interface SubscriptionOptions {
+  eventType: string;
+  userId?: string;
+}
+
+export interface SubscriptionContextType {
+  isConnected: boolean;
+  isReconnecting: boolean;
+  subscribe: (options: SubscriptionOptions, callback: (event: WebSocketEvent) => void) => string;
+  unsubscribe: (subscriptionId: string) => void;
+  send: (message: WebSocketMessage) => void;
+}
