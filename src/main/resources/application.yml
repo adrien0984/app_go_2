@@ -2,6 +2,17 @@ spring:
   application:
     name: app-go-backend
 
+app:
+  auth:
+    demo:
+      username: demo
+      password: demo-password
+    jwt:
+      issuer: app-go-backend
+      secret: change-me-in-production-change-me-in-production
+      access-token-ttl: 15m
+      refresh-token-ttl: 7d
+
 # Server configuration
 server:
   port: 8080
@@ -21,4 +32,3 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-

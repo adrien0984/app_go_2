@@ -129,6 +129,43 @@ Réponse attendue (HTTP 200):
 }
 ```
 
+### Auth JWT
+
+#### Login
+
+```bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"demo-password"}'
+```
+
+#### Refresh
+
+```bash
+curl -X POST http://localhost:8080/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"<refresh-token>"}'
+```
+
+#### Route protégée
+
+```bash
+curl http://localhost:8080/api/protected \
+  -H "Authorization: Bearer <access-token>"
+```
+
+#### Réponse
+
+```json
+{
+  "accessToken": "<jwt>",
+  "refreshToken": "<jwt>",
+  "tokenType": "Bearer",
+  "accessTokenExpiresInSeconds": 900,
+  "refreshTokenExpiresInSeconds": 604800
+}
+```
+
 ## Gestion des Erreurs
 
 L'API utilise un format d'erreur standardisé :
