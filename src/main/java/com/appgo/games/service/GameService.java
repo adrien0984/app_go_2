@@ -3,6 +3,7 @@ package com.appgo.games.service;
 import com.appgo.games.dto.CreateGameResponse;
 import com.appgo.games.dto.GameStateResponse;
 import com.appgo.games.exception.GameNotFoundException;
+import com.appgo.games.exception.IllegalMoveException;
 import com.appgo.games.model.GameState;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,25 @@ public class GameService {
         if (game == null) {
             throw new GameNotFoundException(gameId);
         }
+        return toResponse(game);
+    }
+
+    public GameStateResponse playMove(String gameId, int row, int col) {
+        GameState game = gamesById.get(gameId);
+        if (game == null) {
+            throw new GameNotFoundException(gameId);
+        }
+
+        if (!game.isMoveLegal(row, col)) {
+            throw new IllegalMoveException("Illegal move at position [" + row + ", " + col + "]");
+        }
+
+        try {
+            game.applyMove(row, col);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalMoveException(e.getMessage(), e);
+        }
+
         return toResponse(game);
     }
 
