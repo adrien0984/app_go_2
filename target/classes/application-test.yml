@@ -1,0 +1,10 @@
+spring:
+  profiles: test
+  
+logging:
+  level:
+    root: WARN
+    com.appgo: INFO
+
+server:
+  port: 8081

@@ -1,0 +1,6 @@
+com\appgo\shared\error\ErrorCode.class
+com\appgo\shared\error\GlobalExceptionHandler.class
+com\appgo\api\controller\HealthController.class
+com\appgo\shared\error\ErrorResponse.class
+com\appgo\shared\error\ErrorResponse$ErrorDetail.class
+com\appgo\BackendApplication.class
