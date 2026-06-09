@@ -44,4 +44,11 @@ public class GameController {
         GameStateResponse response = gameService.playMove(gameId, request.row(), request.col());
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{id}/pass")
+    public ResponseEntity<GameStateResponse> passMove(
+            @PathVariable("id") String gameId) {
+        GameStateResponse response = gameService.passMove(gameId);
+        return ResponseEntity.ok(response);
+    }
 }

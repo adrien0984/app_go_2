@@ -52,6 +52,21 @@ public class GameService {
         return toResponse(game);
     }
 
+    public GameStateResponse passMove(String gameId) {
+        GameState game = gamesById.get(gameId);
+        if (game == null) {
+            throw new GameNotFoundException(gameId);
+        }
+
+        try {
+            game.passMove();
+        } catch (IllegalStateException e) {
+            throw new IllegalMoveException(e.getMessage(), e);
+        }
+
+        return toResponse(game);
+    }
+
     private GameStateResponse toResponse(GameState game) {
         List<List<String>> board = game.getBoard().stream()
                 .map(List::copyOf)
